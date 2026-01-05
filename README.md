@@ -1,5 +1,34 @@
 # Finetune VITS and MMS using HuggingFace's tools
 
+## 🎵 NEW: Soprano TTS ONNX Export & CPU Inference
+
+This repository now includes **complete ONNX and OpenVINO CPU inference support** for Soprano TTS! 
+
+**Features:**
+- ✅ ONNX export for decoder (pre-ISTFT) and language model (step-model)
+- ✅ CPU inference with ONNX Runtime and OpenVINO
+- ✅ RTF benchmarking and optimization tools
+- ✅ OpenVINO 2025+ compatible (uses `openvino` and `ovc`)
+
+**Quick Start:**
+```bash
+# Install with ONNX support
+pip install -e ".[onnx]"
+
+# Export models
+python soprano/export/decoder_export.py --out decoder.onnx
+python soprano/export/lm_step_export.py --out lm.onnx
+
+# Run inference
+from soprano.tts import SopranoTTS
+tts = SopranoTTS("lm.onnx", "decoder.onnx", backend="onnx_cpu")
+result = tts.synthesize("Hello world!")
+```
+
+📖 **Full documentation:** See [SOPRANO_README.md](SOPRANO_README.md)
+
+---
+
 ## Introduction
 
 [VITS](https://huggingface.co/docs/transformers/model_doc/vits) is a light weight, low-latency model for English text-to-speech (TTS). Massively Multilingual Speech ([MMS](https://huggingface.co/docs/transformers/model_doc/mms#speech-synthesis-tts)) is an extension of VITS for multilingual TTS, that supports over [1100 languages](https://huggingface.co/facebook/mms-tts#supported-languages). 
