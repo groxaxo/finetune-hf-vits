@@ -151,6 +151,18 @@ class OpenVINODecoder:
         
         return audio
     
+    def infer_spectral(self, hidden_states: np.ndarray) -> np.ndarray:
+        """Run inference: hidden states -> spectral (without ISTFT).
+        
+        Args:
+            hidden_states: Hidden states from LM, shape [B, T, H] or [B, H, T]
+        
+        Returns:
+            Spectral tensor as float32, shape [B, F, T, 2]
+        """
+        hidden_states = self._prepare_input(hidden_states)
+        return self._run_openvino(hidden_states)
+    
     def _prepare_input(self, hidden_states: np.ndarray) -> np.ndarray:
         """Prepare hidden states for OpenVINO model."""
         if hidden_states.ndim != 3:

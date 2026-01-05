@@ -113,13 +113,15 @@ def benchmark_cpu_pipeline(
         step_start = time.perf_counter()
         
         input_id_step = np.array([[generated_tokens[-1]]], dtype=np.int64)
-        logits, hidden_step = lm._run_openvino(input_id_step, None) if hasattr(lm, '_run_openvino') else lm._run_onnx(input_id_step, None)
+        
+        # Use public prefill method instead of private _run methods
+        logits, _ = lm.prefill(input_id_step, None)
         
         # Simple greedy decode for benchmarking
         next_token = int(np.argmax(logits[0, -1, :]))
         generated_tokens.append(next_token)
         
-        hidden_states = np.concatenate([hidden_states, hidden_step], axis=1)
+        hidden_states = np.concatenate([hidden_states, _], axis=1)
         
         step_time = time.perf_counter() - step_start
         step_times.append(step_time)
@@ -137,10 +139,10 @@ def benchmark_cpu_pipeline(
     print(f"  Mean per-token: {mean_step_time*1000:.2f} ms")
     print(f"  Throughput: {1/mean_step_time:.1f} tokens/sec")
     
-    # Decoder inference
+    # Decoder inference (spectral only)
     decoder_start = time.perf_counter()
     hidden_states_transposed = np.transpose(hidden_states, (0, 2, 1))
-    spectral = decoder._run_openvino(hidden_states_transposed) if hasattr(decoder, '_run_openvino') else decoder._run_onnx(hidden_states_transposed)
+    spectral = decoder.infer_spectral(hidden_states_transposed)
     decoder_time = time.perf_counter() - decoder_start
     
     print(f"\nDecoder (spectral):")

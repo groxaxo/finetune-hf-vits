@@ -52,7 +52,12 @@ class ISTFTConfig:
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "ISTFTConfig":
         """Create config from dictionary."""
-        return cls(**{k: v for k, v in config_dict.items() if k in cls.__init__.__code__.co_varnames})
+        # Explicitly list valid parameters instead of using co_varnames
+        valid_params = {
+            'n_fft', 'hop_length', 'win_length', 'window',
+            'center', 'normalized', 'onesided', 'length'
+        }
+        return cls(**{k: v for k, v in config_dict.items() if k in valid_params})
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""

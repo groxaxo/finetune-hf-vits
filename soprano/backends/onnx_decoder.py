@@ -149,6 +149,21 @@ class ONNXDecoder:
         
         return audio
     
+    def infer_spectral(self, hidden_states: np.ndarray) -> np.ndarray:
+        """Run inference: hidden states -> spectral (without ISTFT).
+        
+        Args:
+            hidden_states: Hidden states from LM, shape [B, T, H] or [B, H, T]
+        
+        Returns:
+            Spectral tensor as float32, shape [B, F, T, 2]
+        """
+        hidden_states = self._prepare_input(hidden_states)
+        return self._run_onnx(hidden_states)
+    
+    # Heuristic threshold for detecting [B, T, H] vs [B, H, T] format
+    _FORMAT_DETECTION_RATIO = 2
+    
     def _prepare_input(self, hidden_states: np.ndarray) -> np.ndarray:
         """Prepare hidden states for ONNX model.
         
@@ -171,7 +186,7 @@ class ONNXDecoder:
         
         # Assume if dim1 is much larger than dim2, it's [B, T, H]
         # Otherwise assume [B, H, T]
-        if dim1 > dim2 * 2:  # Heuristic: sequence length >> hidden size
+        if dim1 > dim2 * self._FORMAT_DETECTION_RATIO:
             # Transpose from [B, T, H] to [B, H, T]
             hidden_states = np.transpose(hidden_states, (0, 2, 1))
         

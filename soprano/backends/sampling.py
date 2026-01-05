@@ -68,7 +68,12 @@ def sample_next_token(
         probs = _apply_top_p(probs, top_p)
     
     # Renormalize after filtering
-    probs = probs / np.sum(probs)
+    prob_sum = np.sum(probs)
+    if prob_sum == 0:
+        # If all probabilities filtered out, fall back to uniform distribution
+        probs = np.ones_like(probs) / len(probs)
+    else:
+        probs = probs / prob_sum
     
     # Sample from distribution
     token_id = np.random.choice(len(probs), p=probs)
