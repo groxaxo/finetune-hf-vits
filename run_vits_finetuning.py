@@ -598,21 +598,24 @@ def main():
     # Set seed before initializing model.
     set_seed(training_args.seed)
 
+    # Helper function to infer dataset type from file extension
+    def get_dataset_type_from_file(file_path):
+        """Infer dataset type ('json' or 'csv') from file extension."""
+        file_ext = file_path.split('.')[-1].lower()
+        if file_ext in ['jsonl', 'json']:
+            return 'json'
+        elif file_ext == 'csv':
+            return 'csv'
+        else:
+            raise ValueError(f"Unsupported file extension: {file_ext}. Supported: json, jsonl, csv")
+
     # 4. Load dataset
     raw_datasets = DatasetDict()
 
     if training_args.do_train:
         # Support loading from local files via train_dataset_file
         if data_args.train_dataset_file is not None:
-            # Infer dataset type from file extension
-            file_ext = data_args.train_dataset_file.split('.')[-1].lower()
-            if file_ext in ['jsonl', 'json']:
-                dataset_type = 'json'
-            elif file_ext == 'csv':
-                dataset_type = 'csv'
-            else:
-                raise ValueError(f"Unsupported file extension: {file_ext}. Supported: json, jsonl, csv")
-            
+            dataset_type = get_dataset_type_from_file(data_args.train_dataset_file)
             raw_datasets["train"] = load_dataset(
                 dataset_type,
                 data_files=data_args.train_dataset_file,
@@ -632,15 +635,7 @@ def main():
     if training_args.do_eval:
         # Support loading from local files via eval_dataset_file
         if data_args.eval_dataset_file is not None:
-            # Infer dataset type from file extension
-            file_ext = data_args.eval_dataset_file.split('.')[-1].lower()
-            if file_ext in ['jsonl', 'json']:
-                dataset_type = 'json'
-            elif file_ext == 'csv':
-                dataset_type = 'csv'
-            else:
-                raise ValueError(f"Unsupported file extension: {file_ext}. Supported: json, jsonl, csv")
-            
+            dataset_type = get_dataset_type_from_file(data_args.eval_dataset_file)
             raw_datasets["eval"] = load_dataset(
                 dataset_type,
                 data_files=data_args.eval_dataset_file,

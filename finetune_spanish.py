@@ -102,14 +102,14 @@ def main():
         print(f"Error: Evaluation dataset not found: {args.eval_dataset}", file=sys.stderr)
         sys.exit(1)
     
-    # Determine dataset format
-    train_ext = os.path.splitext(args.train_dataset)[1].lower()
-    eval_ext = os.path.splitext(args.eval_dataset)[1].lower()
+    # Determine dataset format (using same approach as run_vits_finetuning.py)
+    train_ext = args.train_dataset.split('.')[-1].lower()
+    eval_ext = args.eval_dataset.split('.')[-1].lower()
     
-    if train_ext not in ['.jsonl', '.json', '.csv']:
-        print(f"Warning: Training dataset extension '{train_ext}' not recognized. Supported: .jsonl, .json, .csv", file=sys.stderr)
-    if eval_ext not in ['.jsonl', '.json', '.csv']:
-        print(f"Warning: Evaluation dataset extension '{eval_ext}' not recognized. Supported: .jsonl, .json, .csv", file=sys.stderr)
+    if train_ext not in ['jsonl', 'json', 'csv']:
+        print(f"Warning: Training dataset extension '{train_ext}' not recognized. Supported: json, jsonl, csv", file=sys.stderr)
+    if eval_ext not in ['jsonl', 'json', 'csv']:
+        print(f"Warning: Evaluation dataset extension '{eval_ext}' not recognized. Supported: json, jsonl, csv", file=sys.stderr)
     
     # Build command to run accelerate launch with run_vits_finetuning.py
     cmd = [
@@ -143,8 +143,8 @@ def main():
     
     # Execute the command
     try:
-        result = subprocess.run(cmd, check=True)
-        sys.exit(result.returncode)
+        subprocess.run(cmd, check=True)
+        sys.exit(0)
     except subprocess.CalledProcessError as e:
         print(f"\nError: Training script failed with exit code {e.returncode}", file=sys.stderr)
         sys.exit(e.returncode)
