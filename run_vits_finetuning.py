@@ -35,6 +35,8 @@ from transformers.trainer_pt_utils import LengthGroupedSampler
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import send_example_telemetry
 from utils import plot_alignment_to_numpy, plot_spectrogram_to_numpy, VitsDiscriminator, VitsModelForPreTraining, VitsFeatureExtractor, slice_segments, VitsConfig, uromanize
+from enhancements.discriminators import create_discriminator
+
 
 
 if is_wandb_available():
@@ -150,6 +152,12 @@ class VITSTrainingArguments(TrainingArguments):
     weight_gen: float = field(default=1.0, metadata={"help": "Generator loss weight"})
 
     weight_fmaps: float = field(default=1.0, metadata={"help": "Feature map loss weight"})
+
+    discriminator_type: str = field(
+        default="default",
+        metadata={"help": "Discriminator type: 'default', 'multi_tier', or 'wave_unet'"}
+    )
+
 
 
 @dataclass
@@ -951,11 +959,21 @@ def main():
     training_args.num_train_epochs = math.ceil(training_args.max_steps / num_update_steps_per_epoch)
 
     # hack to be able to train on multiple device
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        model.discriminator.save_pretrained(tmpdirname)
-        discriminator = VitsDiscriminator.from_pretrained(tmpdirname)
-        for disc in discriminator.discriminators:
-            disc.apply_weight_norm()
+    if training_args.discriminator_type != "default":
+        # Use enhanced discriminator (multi_tier or wave_unet)
+        discriminator = create_discriminator(training_args.discriminator_type)
+        if discriminator is not None:
+            discriminator.to(model.device)
+        else:
+            logger.error(f"Unknown discriminator type: {training_args.discriminator_type}")
+            raise ValueError(f"Unknown discriminator type: {training_args.discriminator_type}")
+    else:
+        # Use default VITS discriminator
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            model.discriminator.save_pretrained(tmpdirname)
+            discriminator = VitsDiscriminator.from_pretrained(tmpdirname)
+            for disc in discriminator.discriminators:
+                disc.apply_weight_norm()
     del model.discriminator
 
     # init gen_optimizer, gen_lr_scheduler, disc_optimizer, dics_lr_scheduler
