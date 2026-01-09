@@ -1,0 +1,51 @@
+{
+    "project_name": "mms_spanish_finetuning",
+    "push_to_hub": true,
+    "hub_model_id": "mms-tts-spa-finetuned",
+    "overwrite_output_dir": true,
+    "output_dir": "./tmp/vits_finetuned_spa",
+
+    "dataset_name": "mozilla-foundation/common_voice_13_0",
+    "dataset_config_name": "es",
+    "audio_column_name": "audio",
+    "text_column_name": "sentence",
+    "train_split_name": "train",
+    "eval_split_name": "validation",
+
+    "full_generation_sample_text": "Hola, este es un ejemplo de síntesis de voz en español.",
+    
+    "max_duration_in_seconds": 20,
+    "min_duration_in_seconds": 1.0,
+    "max_tokens_length": 500,
+
+    "model_name_or_path": "ylacombe/mms-tts-spa-train",
+
+    "preprocessing_num_workers": 4,
+
+    "do_train": true,
+    "num_train_epochs": 200,
+    "gradient_accumulation_steps": 1,
+    "gradient_checkpointing": false,
+    "per_device_train_batch_size": 16,
+    "learning_rate": 5e-5,
+    "adam_beta1": 0.8,
+    "adam_beta2": 0.99,
+    "warmup_ratio": 0.01,
+    "group_by_length": false,
+
+    "do_eval": true,
+    "eval_steps": 50,
+    "per_device_eval_batch_size": 16,
+    "max_eval_samples": 25,
+    "do_step_schedule_per_epoch": true,
+
+    "weight_disc": 3,
+    "weight_fmaps": 1,
+    "weight_gen": 1,
+    "weight_kl": 1.5,
+    "weight_duration": 1,
+    "weight_mel": 35,
+
+    "fp16": true,
+    "seed": 456
+}

@@ -176,6 +176,12 @@ class DataTrainingArguments:
     dataset_config_name: Optional[str] = field(
         default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library)."}
     )
+    train_dataset_file: Optional[str] = field(
+        default=None, metadata={"help": "Path to training dataset file (JSONL, JSON, or CSV). Overrides dataset_name for training."}
+    )
+    eval_dataset_file: Optional[str] = field(
+        default=None, metadata={"help": "Path to evaluation dataset file (JSONL, JSON, or CSV). Overrides dataset_name for evaluation."}
+    )
     overwrite_cache: bool = field(
         default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
     )
@@ -592,26 +598,59 @@ def main():
     # Set seed before initializing model.
     set_seed(training_args.seed)
 
+    # Helper function to infer dataset type from file extension
+    def get_dataset_type_from_file(file_path):
+        """Infer dataset type ('json' or 'csv') from file extension."""
+        file_ext = file_path.split('.')[-1].lower()
+        if file_ext in ['jsonl', 'json']:
+            return 'json'
+        elif file_ext == 'csv':
+            return 'csv'
+        else:
+            raise ValueError(f"Unsupported file extension: {file_ext}. Supported: json, jsonl, csv")
+
     # 4. Load dataset
     raw_datasets = DatasetDict()
 
     if training_args.do_train:
-        raw_datasets["train"] = load_dataset(
-            data_args.dataset_name,
-            data_args.dataset_config_name,
-            split=data_args.train_split_name,
-            cache_dir=model_args.cache_dir,
-            token=model_args.token,
-        )
+        # Support loading from local files via train_dataset_file
+        if data_args.train_dataset_file is not None:
+            dataset_type = get_dataset_type_from_file(data_args.train_dataset_file)
+            raw_datasets["train"] = load_dataset(
+                dataset_type,
+                data_files=data_args.train_dataset_file,
+                split="train",
+                cache_dir=model_args.cache_dir,
+                token=model_args.token,
+            )
+        else:
+            raw_datasets["train"] = load_dataset(
+                data_args.dataset_name,
+                data_args.dataset_config_name,
+                split=data_args.train_split_name,
+                cache_dir=model_args.cache_dir,
+                token=model_args.token,
+            )
 
     if training_args.do_eval:
-        raw_datasets["eval"] = load_dataset(
-            data_args.dataset_name,
-            data_args.dataset_config_name,
-            split=data_args.eval_split_name,
-            cache_dir=model_args.cache_dir,
-            token=model_args.token,
-        )
+        # Support loading from local files via eval_dataset_file
+        if data_args.eval_dataset_file is not None:
+            dataset_type = get_dataset_type_from_file(data_args.eval_dataset_file)
+            raw_datasets["eval"] = load_dataset(
+                dataset_type,
+                data_files=data_args.eval_dataset_file,
+                split="train",
+                cache_dir=model_args.cache_dir,
+                token=model_args.token,
+            )
+        else:
+            raw_datasets["eval"] = load_dataset(
+                data_args.dataset_name,
+                data_args.dataset_config_name,
+                split=data_args.eval_split_name,
+                cache_dir=model_args.cache_dir,
+                token=model_args.token,
+            )
 
     if data_args.audio_column_name not in next(iter(raw_datasets.values())).column_names:
         raise ValueError(
