@@ -9,36 +9,7 @@
 \_|   |_|_| |_|                              \_| |_/_|     \_/  |_____/  \_|  |_/\_|  |_/_____/ 
 ```
 
-## 🎵 NEW: Soprano TTS ONNX Export & CPU Inference
-
-This repository now includes **complete ONNX and OpenVINO CPU inference support** for Soprano TTS! 
-
-**Features:**
-- ✅ ONNX export for decoder (pre-ISTFT) and language model (step-model)
-- ✅ CPU inference with ONNX Runtime and OpenVINO
-- ✅ RTF benchmarking and optimization tools
-- ✅ OpenVINO 2025+ compatible (uses `openvino` and `ovc`)
-
-**Quick Start:**
-```bash
-# Install with ONNX support
-pip install -e ".[onnx]"
-
-# Export models
-python soprano/export/decoder_export.py --out decoder.onnx
-python soprano/export/lm_step_export.py --out lm.onnx
-
-# Run inference
-from soprano.tts import SopranoTTS
-tts = SopranoTTS("lm.onnx", "decoder.onnx", backend="onnx_cpu")
-result = tts.synthesize("Hello world!")
-```
-
-📖 **Full documentation:** See [SOPRANO_README.md](SOPRANO_README.md)
-
----
-
-## 🚀 NEW: Enhanced Discriminator Architecture & DSP Postprocessing
+## 🚀 Enhanced Discriminator Architecture & DSP Postprocessing
 
 This repository now includes **advanced discriminator architectures** and **DSP-based output enhancement** for improved training and audio quality!
 
