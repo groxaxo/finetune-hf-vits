@@ -1,0 +1,89 @@
+{
+    "project_name": "vits_enhanced_training",
+    "push_to_hub": true,
+    "hub_model_id": "vits_enhanced_model",
+    "overwrite_output_dir": true,
+    "output_dir": "./tmp/vits_enhanced",
+    
+    "dataset_name": "ylacombe/english_dialects",
+    "dataset_config_name": "welsh_female",
+    "audio_column_name": "audio",
+    "text_column_name": "text",
+    "train_split_name": "train",
+    "eval_split_name": "train",
+    "speaker_id_column_name": "speaker_id",
+    "override_speaker_embeddings": true,
+    "filter_on_speaker_id": 5223,
+    
+    "max_duration_in_seconds": 20,
+    "min_duration_in_seconds": 1.0,
+    "max_tokens_length": 500,
+    
+    "model_name_or_path": "ylacombe/vits-ljs-with-discriminator",
+    
+    "preprocessing_num_workers": 4,
+    
+    "do_train": true,
+    "num_train_epochs": 200,
+    "gradient_accumulation_steps": 2,
+    "gradient_checkpointing": false,
+    "per_device_train_batch_size": 16,
+    "learning_rate": 2e-5,
+    "adam_beta1": 0.8,
+    "adam_beta2": 0.99,
+    "warmup_ratio": 0.01,
+    "group_by_length": false,
+    
+    "do_eval": true,
+    "eval_steps": 50,
+    "per_device_eval_batch_size": 16,
+    "max_eval_samples": 25,
+    "do_step_schedule_per_epoch": true,
+    
+    "weight_disc": 3.0,
+    "weight_fmaps": 1.0,
+    "weight_gen": 1.0,
+    "weight_kl": 1.5,
+    "weight_duration": 1.0,
+    "weight_mel": 35.0,
+    
+    "fp16": true,
+    "seed": 456,
+    
+    "_comment_enhancements": "=== ENHANCEMENT OPTIONS ===",
+    "_comment_discriminator": "Advanced discriminator architecture for better audio quality",
+    "discriminator_type": "multi_tier",
+    "use_waveform_discriminator": true,
+    "use_spectral_discriminator": true,
+    "use_temporal_discriminator": true,
+    "discriminator_tier_weights": [1.0, 0.8, 0.6],
+    
+    "_comment_mel": "Full-band mel spectrogram for richer audio",
+    "use_full_band_mel": true,
+    "n_mels": 128,
+    "n_fft": 2048,
+    "fmax": 11025,
+    
+    "_comment_adaptive_loss": "Adaptive loss weights for better training",
+    "use_adaptive_loss_weights": true,
+    "loss_warmup_steps": 1000,
+    "weight_schedule_type": "progressive",
+    
+    "_comment_augmentation": "Data augmentation for robustness",
+    "use_data_augmentation": true,
+    "augmentation_prob": 0.5,
+    "augmentation_types": ["pitch_shift", "time_stretch"],
+    
+    "_comment_prosody": "Explicit prosody modeling",
+    "use_prosody_predictors": false,
+    "prosody_hidden_size": 256,
+    
+    "_comment_attention": "Attention mechanisms",
+    "use_cross_attention": false,
+    "num_attention_heads": 8,
+    
+    "_comment_postprocessing": "Post-processing quality preset",
+    "postprocessing_preset": "balanced",
+    
+    "_comment_note": "Set options to false/remove to disable enhancements"
+}
