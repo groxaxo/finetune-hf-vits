@@ -29,23 +29,43 @@ Complete ONNX and OpenVINO CPU inference support for Soprano TTS:
 - ✅ CPU inference with ONNX Runtime and OpenVINO
 - ✅ RTF benchmarking and optimization tools
 - ✅ OpenVINO 2025+ compatible (uses `openvino` and `ovc`)
+```
+ _____ _            _                        _   _ _____ _____  _____   ___  ___ ___  ___  _____
+|  ___(_)_ __   ___| |_ _   _ _ __   ___    | | | |  ___|_   _|/ ____| |  \/  ||  \/  |/ ____|
+| |_  | | '_ \ / _ \ __| | | | '_ \ / _ \   | |_| | |_    | |  | (___   | \  / || \  / | (___  
+|  _| | | | | |  __/ |_| |_| | | | |  __/   |  _  |  _|   | |   \___ \  | |\/| || |\/| |\___ \ 
+| |   | | | | |\___|\__|\__,_|_| |_|\___|   | | | | |     | |   ____) | | |  | || |  | |____) |
+\_|   |_|_| |_|                              \_| |_/_|     \_/  |_____/  \_|  |_/\_|  |_/_____/ 
+```
+
+## 🚀 Enhanced Discriminator Architecture & DSP Postprocessing
+
+This repository now includes **advanced discriminator architectures** and **DSP-based output enhancement** for improved training and audio quality!
+
+**Features:**
+- ✅ **Multi-Tier Discriminator (MTD)**: Analyzes audio at 3 different STFT resolutions (High, Mid, Low) for better frequency coverage
+- ✅ **Wave-U-Net Discriminator**: Lightweight, fast discriminator with skip connections
+- ✅ **DSP Postprocessing**: Configurable enhancement pipeline with loudness normalization, high-pass filtering, and silence trimming
+- ✅ **Full-Band Mel Settings**: 128 Mels, 11kHz fmax for high-fidelity training
 
 **Quick Start:**
 ```bash
-# Install with ONNX support
-pip install -e ".[onnx]"
+# Train with Multi-Tier Discriminator
+accelerate launch run_vits_finetuning.py ./training_config_examples/finetune_enhanced.json
 
-# Export models
-python soprano/export/decoder_export.py --out decoder.onnx
-python soprano/export/lm_step_export.py --out lm.onnx
+# Or use Wave-U-Net discriminator
+accelerate launch run_vits_finetuning.py \
+  --model_name_or_path facebook/mms-tts-spa \
+  --discriminator_type wave_unet \
+  --output_dir ./vits_wave_unet_output \
+  ...
 
-# Run inference
-from soprano.tts import SopranoTTS
-tts = SopranoTTS("lm.onnx", "decoder.onnx", backend="onnx_cpu")
-result = tts.synthesize("Hello world!")
+# Apply postprocessing to generated audio
+from enhancements.postprocessing import enhance_tts_output
+enhanced_audio = enhance_tts_output(audio, sample_rate, quality_preset="balanced")
 ```
 
-📖 **Full documentation:** See [SOPRANO_README.md](SOPRANO_README.md)
+📖 **Configuration:** See [training_config_examples/finetune_enhanced.json](training_config_examples/finetune_enhanced.json) for full example with enhanced discriminators.
 
 ---
 
@@ -238,6 +258,10 @@ accelerate launch run_vits_finetuning.py --model_name_or_path MODEL_NAME_OR_PATH
 * The model to finetune: `model_name_or_path`.
   - Here it should point to the training checkpoint of the previous [section](#2-model-selection).
   - For example, if you choose an already existing checkpoint: `ylacombe/vits-ljs-with-discriminator`, or if you converted your own checkpoint: `<repo-id-you-want>` or `<local-folder>`. 
+* **NEW - Discriminator type**: `discriminator_type` (default: `"default"`)
+  - `"default"`: Uses the original VITS discriminator
+  - `"multi_tier"`: Uses Multi-Tier Discriminator (MTD) for multi-resolution analysis
+  - `"wave_unet"`: Uses Wave-U-Net discriminator for faster, lightweight training
 * The dataset used `dataset_name` and its details: `dataset_config_name`, column names, etc. 
   - If there are multiple speakers and you want to only keep one, be careful to `speaker_id_column_name`, `override_speaker_embeddings` and `filter_on_speaker_id`. The latter allows to keep only one speaker but you can also train on multiple speakers.
   - For example the dataset used by default in [`finetune_english.json`](training_config_examples/finetune_english.json) is a subset of [British Isles accents dataset](https://huggingface.co/datasets/ylacombe/english_dialects), using a single Welsh female voice of the `welsh_female` configuration, identified by `speaker_id=5223`.
@@ -302,6 +326,36 @@ speech = synthesiser(uromanized_text)
 
 scipy.io.wavfile.write("finetuned_output.wav", rate=speech["sampling_rate"], data=speech["audio"][0])
 ```
+
+### Enhanced Inference with DSP Postprocessing
+
+For improved audio quality, you can apply DSP-based postprocessing to the generated speech:
+
+```python
+from transformers import pipeline
+import scipy
+import numpy as np
+from enhancements.postprocessing import enhance_tts_output
+
+model_id = "ylacombe/vits_ljs_welsh_female_monospeaker_2"
+synthesiser = pipeline("text-to-speech", model_id)
+
+speech = synthesiser("Hello, my dog is cooler than you!")
+
+# Apply enhancement
+enhanced_audio = enhance_tts_output(
+    audio=speech["audio"][0],
+    sample_rate=speech["sampling_rate"],
+    quality_preset="balanced"  # Options: "fast", "balanced", "max_clean"
+)
+
+scipy.io.wavfile.write("enhanced_output.wav", rate=speech["sampling_rate"], data=enhanced_audio)
+```
+
+The postprocessing pipeline includes:
+- **Loudness normalization**: Prevents clipping and ensures consistent volume
+- **High-pass filtering**: Removes DC offset and low-frequency rumble
+- **Silence trimming**: Automatically trims silence from the beginning and end (except in "fast" mode)
 
 -----------------------------
 
